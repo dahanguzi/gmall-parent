@@ -2,7 +2,6 @@ package com.atguigu.gmall.ums;
 
 import com.atguigu.gmall.ums.entity.Role;
 import com.atguigu.gmall.ums.mapper.RoleMapper;
-import io.shardingjdbc.core.api.HintManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;

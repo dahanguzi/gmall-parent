@@ -2,7 +2,7 @@ package com.atguigu.gmall.ums.service.impl;
 
 import com.atguigu.gmall.ums.entity.IntegrationConsumeSetting;
 import com.atguigu.gmall.ums.mapper.IntegrationConsumeSettingMapper;
-import com.atguigu.gmall.ums.service.IntegrationConsumeSettingService;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +15,6 @@ import org.springframework.stereotype.Service;
  * @since 2019-03-19
  */
 @Service
-public class IntegrationConsumeSettingServiceImpl extends ServiceImpl<IntegrationConsumeSettingMapper, IntegrationConsumeSetting> implements IntegrationConsumeSettingService {
+public class IntegrationConsumeSettingServiceImpl extends ServiceImpl<IntegrationConsumeSettingMapper, IntegrationConsumeSetting> implements IService<IntegrationConsumeSetting> {
 
 }
