@@ -1,5 +1,6 @@
 package com.atguigu.gmall.admin.config;
 
+import com.google.common.base.Predicates;
 import io.swagger.annotations.Api;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,7 +44,10 @@ public class GmallSwagger2Config {
                 .groupName("后台商品模块")
                 .select()
                 .apis(RequestHandlerSelectors.withClassAnnotation(Api.class))
-                .paths(PathSelectors.regex("/product.*"))
+                //.paths(PathSelectors.regex("/product.*"))
+                //.paths(PathSelectors.regex("/brand.*"))
+                .paths(Predicates.not(PathSelectors.regex("/error.*")))
+                //.paths(Predicates.and(PathSelectors.regex("/brand/.*")))
                 .build()
                 .apiInfo(productInfo())
                 .enable(true);

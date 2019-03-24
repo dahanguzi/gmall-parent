@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
  * </p>
  *
  * @author LZj
- * @since 2019-03-19
+ * @since 2019-03-22
  */
 public interface ProductCategoryAttributeRelationService extends IService<ProductCategoryAttributeRelation> {
 

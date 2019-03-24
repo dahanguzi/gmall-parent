@@ -15,28 +15,25 @@ import org.springframework.validation.BindingResult;
 public class GmallValidatorAspect {
 
     @Around("execution(* com.atguigu.gmall.admin..controller.*.* (..))")
-    public Object aroundNotice(ProceedingJoinPoint proceedingJoinPoint){
+    public Object aroundNotice(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
 
         log.info("校验切面切入进行工作...");
         Object[] args = proceedingJoinPoint.getArgs();
 
         Object proceed = null;
-        try {
-            for (Object arg:args) {
-                if(arg instanceof BindingResult){
-                    int count = ((BindingResult) arg).getErrorCount();
-                    if(count > 0){
-                        log.info("校验发生错误...直接给用户返回");
-                        CommonResult commonResult = new CommonResult().validateFailed((BindingResult) arg);
-                        return commonResult;
-                    }
-
+        for (Object arg:args) {
+            if(arg instanceof BindingResult){
+                int count = ((BindingResult) arg).getErrorCount();
+                if(count > 0){
+                    log.info("校验发生错误...直接给用户返回");
+                    CommonResult commonResult = new CommonResult().validateFailed((BindingResult) arg);
+                    return commonResult;
                 }
+
             }
-            proceed = proceedingJoinPoint.proceed(args);
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
         }
+        proceed = proceedingJoinPoint.proceed(args);
+
 
         return proceed;
     }

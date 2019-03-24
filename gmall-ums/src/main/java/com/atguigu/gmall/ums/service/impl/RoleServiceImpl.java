@@ -2,7 +2,7 @@ package com.atguigu.gmall.ums.service.impl;
 
 import com.atguigu.gmall.ums.entity.Role;
 import com.atguigu.gmall.ums.mapper.RoleMapper;
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.atguigu.gmall.ums.service.RoleService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +15,6 @@ import org.springframework.stereotype.Service;
  * @since 2019-03-19
  */
 @Service
-public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements IService<Role> {
+public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements RoleService {
 
 }

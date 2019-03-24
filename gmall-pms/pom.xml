@@ -64,6 +64,12 @@
             <artifactId>logstash-logback-encoder</artifactId>
             <version>4.8</version>
         </dependency>
+
+        <!--引入Redis的缓存依赖-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
     </dependencies>
 
 

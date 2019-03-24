@@ -7,4 +7,30 @@
         id, parent_id, name, level, product_count, product_unit, nav_status, show_status, sort, icon, keywords, description
     </sql>
 
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.atguigu.gmall.pms.entity.ProductCategory">
+        <id column="id" property="id" />
+        <result column="parent_id" property="parentId" />
+        <result column="name" property="name" />
+        <result column="level" property="level" />
+        <result column="product_count" property="productCount" />
+        <result column="product_unit" property="productUnit" />
+        <result column="nav_status" property="navStatus" />
+        <result column="show_status" property="showStatus" />
+        <result column="sort" property="sort" />
+        <result column="icon" property="icon" />
+        <result column="keywords" property="keywords" />
+        <result column="description" property="description" />
+    </resultMap>
+    
+    <resultMap id="listWithChildrenResultMap" type="com.atguigu.gmall.to.PmsProductCategoryWithChildrenItem">
+
+        <collection property="children" select="listWithChildren" column="id"/>
+
+    </resultMap>
+
+    <select id="listWithChildren" resultMap="listWithChildrenResultMap">
+        SELECT * FROM pms_product_category WHERE parent_id = #{id}
+    </select>
+
 </mapper>

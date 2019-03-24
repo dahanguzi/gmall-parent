@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Component;
 
-
 /**
  * <p>
  * 后台用户表 服务实现类
@@ -17,25 +16,23 @@ import org.springframework.stereotype.Component;
  * @author LZj
  * @since 2019-03-19
  */
-@Component
 @Service
+@Component
 public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements AdminService {
 
     @Override
-    public Admin loginByUsername(String uesrname) {
+    public Admin loginByUsername(String username) {
 
         AdminMapper baseMapper = getBaseMapper();
-        QueryWrapper<Admin> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("username",uesrname);
-        Admin admin = baseMapper.selectOne(queryWrapper);
+        Admin admin = baseMapper.selectOne(new QueryWrapper<Admin>().eq("username", username));
         return admin;
     }
 
     @Override
     public Admin getAdminByUsername(String userName) {
-        AdminMapper adminMapper = getBaseMapper();
-        Admin admin = adminMapper.selectOne(new QueryWrapper<Admin>().eq("username", userName));
 
+        AdminMapper baseMapper = getBaseMapper();
+        Admin admin = baseMapper.selectOne(new QueryWrapper<Admin>().eq("username", userName));
         return admin;
     }
 }

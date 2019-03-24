@@ -55,11 +55,15 @@
         </dependency>
 
         <!--引入elk日志依赖-->
-        <dependency>
-            <groupId>net.logstash.logback</groupId>
-            <artifactId>logstash-logback-encoder</artifactId>
-            <version>4.8</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>net.logstash.logback</groupId>-->
+            <!--<artifactId>logstash-logback-encoder</artifactId>-->
+            <!--<version>4.8</version>-->
+        <!--</dependency>-->
+
+
+
+
     </dependencies>
 
     <build>
