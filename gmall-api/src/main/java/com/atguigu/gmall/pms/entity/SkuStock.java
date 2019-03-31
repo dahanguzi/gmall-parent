@@ -76,5 +76,4 @@ public class SkuStock implements Serializable {
     @TableField("lock_stock")
     private Integer lockStock;
 
-
 }

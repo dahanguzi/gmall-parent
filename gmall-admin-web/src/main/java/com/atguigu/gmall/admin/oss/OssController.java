@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * Oss相关操作接口
  */
+@CrossOrigin
 @Controller
 @Api(tags = "OssController",description = "Oss管理")
 @RequestMapping("/aliyun/oss")

@@ -23,7 +23,7 @@
         <result column="description" property="description" />
     </resultMap>
     
-    <resultMap id="listWithChildrenResultMap" type="com.atguigu.gmall.to.PmsProductCategoryWithChildrenItem">
+    <!--<resultMap id="listWithChildrenResultMap" type="com.atguigu.gmall.to.PmsProductCategoryWithChildrenItem" extends="BaseResultMap">
 
         <collection property="children" select="listWithChildren" column="id"/>
 
@@ -31,6 +31,29 @@
 
     <select id="listWithChildren" resultMap="listWithChildrenResultMap">
         SELECT * FROM pms_product_category WHERE parent_id = #{id}
+    </select>-->
+
+    <resultMap id="listWithChildrenResultMap" type="com.atguigu.gmall.to.PmsProductCategoryWithChildrenItem" extends="BaseResultMap">
+        <!--<result property="children" ></result>-->
+
+        <!--这个children是一个对象，指定封装规则-->
+        <!--<association property="children"></association>-->
+        <!--这个children是一个集合-->
+        <!--column=""将这次查询的指定的这一列的值传下去作为下一次查询使用的值，写列名，代表将哪一列的值传下去-->
+        <collection property="children" select="listWithChildren" column="id"/>
+
+    </resultMap>
+
+    <!--查某个菜单的子菜单-->
+    <select id="listWithChildren" resultMap="listWithChildrenResultMap">
+        /*id是什么相当于查询的这个菜单的子菜单*/
+        select * from pms_product_category where parent_id = #{id}
     </select>
+
+    <!-- void updateCountById(Long id);-->
+    <update id="updateCountById">
+        UPDATE `pms_product_category` SET product_count=product_count+1
+        WHERE id = #{id}
+    </update>
 
 </mapper>

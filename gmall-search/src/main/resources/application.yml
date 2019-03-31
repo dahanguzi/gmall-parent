@@ -1,0 +1,9 @@
+spring:
+  elasticsearch:
+    jest:
+      uris:
+      - http://192.168.136.128:9201
+#      - http://192.168.136.128:9202
+#      - http://192.168.136.128:9203
+      #read-timeout: 20000 #读取超时
+      #connection-timeout: 20000 #连接超时
