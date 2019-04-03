@@ -4,6 +4,8 @@ import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.dubbo.rpc.RpcContext;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
+import com.atguigu.gmall.cart.bean.Cart;
 import com.atguigu.gmall.cart.bean.CartItem;
 import com.atguigu.gmall.cart.bean.SkuResponse;
 import com.atguigu.gmall.cart.service.CartService;
@@ -20,6 +22,9 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -113,11 +118,146 @@ public class CartServiceImpl implements CartService {
         return skuResponse;
     }
 
+    @Override
+    public boolean deleteCart(Long skuId, String cartKey) {
+        //远程传输，隐式传参
+        String token = RpcContext.getContext().getAttachment("gmallusertoken");
+
+        //通过token获取用户的信息
+        String memberjson = redisTemplate.opsForValue().get(RedisCacheConstant.USER_INFO_CACHE_KEY + token);
+        Member member = JSON.parseObject(memberjson, Member.class);
+
+        RMap<String, String> map = null;
+        if(member == null){     //用户未登录
+            //获取未登录时的购物车
+            map = redissonClient.getMap(RedisCacheConstant.CART_TEMP+cartKey);
+        }else{
+            map = redissonClient.getMap(RedisCacheConstant.USER_CART+cartKey);
+        }
+
+        map.remove(skuId+"");
+        return true;
+    }
+
+    @Override
+    public boolean updateCount(Long skuId, Integer num, String cartKey) {
+        //可以通过token来获取用户对象，判断用户是否已经登录
+        String token = RpcContext.getContext().getAttachment("gmallusertoken");
+        //根据key获取value
+        String memberjson = redisTemplate.opsForValue().get(RedisCacheConstant.USER_INFO_CACHE_KEY + token);
+        Member member = JSON.parseObject(memberjson, Member.class);
+
+        //分布式集合
+        RMap<String, String> map = null;
+        //判断用户是否登录
+        if(member == null){//表示用户未登录
+            //没登录，更新的是游客购物车
+            map = redissonClient.getMap(RedisCacheConstant.CART_TEMP+cartKey);
+        }else{//用户已经登录
+            //登录后，更新的是用户购物车
+            map = redissonClient.getMap(RedisCacheConstant.USER_CART + member.getId());
+        }
+        //购物车存储数据为hash结构，value值已map的形式进行存储
+        //这里的key是结果中map的key，value为购物项的值，以json的形式进行存储
+        String s = map.get(skuId + "");
+        //解析json得到购物项
+        CartItem cartItem = JSON.parseObject(s, CartItem.class);
+        //修改购物车对应购物项的数量
+        cartItem.setNum(num);
+        //修改过后重新进行存储
+        String json = JSON.toJSONString(cartItem);
+        map.put(skuId+"",json);
+
+        return true;
+    }
+
+    @Override
+    public Cart cartItemsList(String cartKey) {
+        String token = RpcContext.getContext().getAttachment("gmallusertoken");
+        String memberjson = redisTemplate.opsForValue().get(RedisCacheConstant.USER_INFO_CACHE_KEY + token);
+        Member member = JSON.parseObject(memberjson, Member.class);
+        RMap<String, String> map = null;
+        if(member == null){
+            //用户未登录
+            map = redissonClient.getMap(RedisCacheConstant.CART_TEMP + cartKey);
+        }else{
+            //用户登陆
+            //尝试合并购物车
+            mergeCart(RedisCacheConstant.CART_TEMP+cartKey,RedisCacheConstant.USER_CART+member.getId());
+
+            //合并完成后再操作
+            map = redissonClient.getMap(RedisCacheConstant.USER_CART + member.getId());
+            //
+        }
+
+        if(map !=null){
+            Cart cart = new Cart();
+            cart.setItems(new ArrayList<CartItem>());
+            map.entrySet().forEach((o)->{
+                String json = o.getValue();
+                CartItem item = JSON.parseObject(json, CartItem.class);
+                cart.getItems().add(item);
+            });
+
+            return  cart;
+        }else {
+            return new Cart();
+        }
+    }
+
+    @Override
+    public boolean checkCart(Long skuId, Integer flag, String cartKey) {
+        String token = RpcContext.getContext().getAttachment("gmallusertoken");//远程传输过来的
+        String memberJson = redisTemplate.opsForValue().get(RedisCacheConstant.USER_INFO_CACHE_KEY + token);
+        Member member = JSON.parseObject(memberJson, Member.class);
+        RMap<String, String> map = null;
+        if(member == null){
+            //用户未登录
+            map = redissonClient.getMap(RedisCacheConstant.CART_TEMP + cartKey);
+        }else {
+            //用户登陆
+            map = redissonClient.getMap(RedisCacheConstant.USER_CART + member.getId());
+        }
+
+        String s = map.get(skuId + "");
+        CartItem item = JSON.parseObject(s, CartItem.class);
+        item.setChecked(flag==0?false:true);
+        String json = JSON.toJSONString(item);
+        map.put(skuId + "",json);
+
+        //维护checked字段的set
+        String checked = map.get("checked");
+        Set<String> checkedSkuIds = new HashSet<>();
+        //复杂的泛型数据转换
+        if(!StringUtils.isEmpty(checked)){
+            //有
+            Set<String> strings = JSON.parseObject(checked, new TypeReference<Set<String>>() {
+            });
+            if(flag == 0){
+                //不勾中
+                strings.remove(skuId+"");
+            }else {
+                strings.add(skuId+"");
+            }
+
+            String s1 = JSON.toJSONString(strings);
+            map.put("checked",s1);
+
+        }else {
+            //没有
+            checkedSkuIds.add(skuId+"");
+            String s1 = JSON.toJSONString(checkedSkuIds);
+            map.put("checked",s1);
+        }
+
+        return true;
+    }
+
 
     //添加一条项目到购物车
     private void addItemToCart(CartItem cartItem, Integer num, String cartKey) {
 
-        //分布式redis，拿取到购物车
+        //分布式集合，拿取到购物车
         RMap<String, String> map = redissonClient.getMap(cartKey);
         boolean b = map.containsKey(cartItem.getProductSkuId()+"");
 
