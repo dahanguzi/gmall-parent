@@ -33,5 +33,7 @@ public interface ProductService extends IService<Product> {
 
     List<EsProductAttributeValue> getProductBaseAttrs(Long productId);
 
+    Product getProductByIdFromCache(Long productId);
+
     //sonaqubar、semeger
 }

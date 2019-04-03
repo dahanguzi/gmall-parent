@@ -9,32 +9,40 @@
         <outputRelativeToContentRoot value="true" />
         <module name="gmall-admin-web" />
         <module name="gmall-api" />
+        <module name="gmall-cart" />
+        <module name="gmall-cas" />
         <module name="gmall-cms" />
         <module name="gmall-common" />
         <module name="gmall-item" />
         <module name="gmall-mpmbg" />
         <module name="gmall-oms" />
+        <module name="gmall-order" />
         <module name="gmall-pms" />
         <module name="gmall-portal-web" />
         <module name="gmall-search" />
         <module name="gmall-sms" />
         <module name="gmall-ums" />
+        <module name="rabbitmq-demo" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="gmall-admin-web" target="1.8" />
       <module name="gmall-api" target="1.8" />
+      <module name="gmall-cart" target="1.8" />
+      <module name="gmall-cas" target="1.8" />
       <module name="gmall-cms" target="1.8" />
       <module name="gmall-common" target="1.8" />
       <module name="gmall-item" target="1.8" />
       <module name="gmall-mpmbg" target="1.8" />
       <module name="gmall-oms" target="1.8" />
+      <module name="gmall-order" target="1.8" />
       <module name="gmall-parent" target="1.8" />
       <module name="gmall-pms" target="1.8" />
       <module name="gmall-portal-web" target="1.8" />
       <module name="gmall-search" target="1.8" />
       <module name="gmall-sms" target="1.8" />
       <module name="gmall-ums" target="1.8" />
+      <module name="rabbitmq-demo" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

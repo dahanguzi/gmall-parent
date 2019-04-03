@@ -2,6 +2,8 @@ package com.atguigu.gmall.pms.service.impl;
 
 import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.dubbo.config.annotation.Service;
+import com.alibaba.fastjson.JSON;
+import com.atguigu.gmall.constant.RedisCacheConstant;
 import com.atguigu.gmall.pms.entity.*;
 import com.atguigu.gmall.pms.mapper.*;
 import com.atguigu.gmall.pms.service.ProductService;
@@ -20,13 +22,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.params.SetParams;
 
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -66,6 +70,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     @Reference(version = "1.0")
     GmallSearchService gmallSearchService;
 
+    @Autowired
+    JedisPool jedisPool;
 
     //本线程的对象
     ThreadLocal<Product> productThreadLocal = new ThreadLocal<Product>();
@@ -301,14 +307,91 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     //获取商品的销售属性值
     @Override
     public List<EsProductAttributeValue> getProductSaleAttrs(Long productId) {
-        productMapper.getProductSaleAttrs(productId);
-        return null;
+
+        return productMapper.getProductSaleAttrs(productId);
     }
 
     //获取商品的基本属性值
     @Override
     public List<EsProductAttributeValue> getProductBaseAttrs(Long productId) {
-        productMapper.getProductBaseAttrs(productId);
-        return null;
+
+        return productMapper.getProductBaseAttrs(productId);
+    }
+
+    @Override
+    public Product getProductByIdFromCache(Long productId) {
+        Jedis jedis = jedisPool.getResource();
+        //从缓存中获取数据
+        //考虑缓存穿透的问题
+        /*
+            缓存穿透问题：缓存与数据库中都查询不到相关数据，频繁的查询数据库
+            防止数据库数据更新，缓存中的数据设置有效时间
+
+            （1）雪崩指的是大面积的key失效
+            （2）而击穿指的是在某一时刻大量请求查询同一个key，而该key失效
+
+              应用级锁（synchronized/lock）
+              分布式锁（）
+         */
+        //1、从缓存中查询数据
+        String s = jedis.get(RedisCacheConstant.PRODUCT_INFO_CACHE_KEY + productId);
+        Product product = null;
+
+        //2、判断缓存中是否有数据，有的话就返回，没有就查询数据库
+        if(StringUtils.isEmpty(s)){
+            //表示当redis中不存在key及对应value值时，加上锁并去数据库中查询
+            //Long lock = jedis.setnx("lock", "123");
+            //占坑的时候，我们要给一个唯一标识UUID
+            String token = UUID.randomUUID().toString();
+
+            String lock = jedis.set("lock", token, SetParams.setParams().ex(5).nx());
+            if(lock == null){
+                jedis.expire("lock",5);
+                try{
+                    product = productMapper.selectById(productId);
+                    //String stringValue = product.toString();
+                    String json = JSON.toJSONString(product);
+
+                    //为了防止缓存雪崩问题的出现，可以为缓存有效时间设定随机值，避免雪崩
+                    int anInt = new Random().nextInt(2000);
+
+                    //防止缓存击穿，不管查到与否都将其放在redis中
+                    if(product == null){
+                        jedis.setex(RedisCacheConstant.PRODUCT_INFO_CACHE_KEY + productId,60+anInt,json);
+                    }else{
+                        jedis.setex(RedisCacheConstant.PRODUCT_INFO_CACHE_KEY + productId,60*60*24*3+anInt,json);
+                    }
+
+                }finally{
+                    //删锁的问题，如果由于业务超出的锁的自动删除时间；我们直接按照key删除锁。会导致删掉别人的锁
+//                    if(token.equals(jedis.get("lock"))){
+//                        //这样有没有问题？判断是相等，但是正好锁过期？数值正在网络传输中锁过期了怎么办？
+//                        //比较与删除也应该原子操作
+//                        //脚本删除锁  lua
+//                        jedis.del("lock");
+//                    }
+
+                    /**
+                     * get
+                     * expire
+                     */
+                    String script =
+                            "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+                    jedis.eval(script, Collections.singletonList("lock"),Collections.singletonList(token));
+                }
+            }else{
+                try {
+                    Thread.sleep(1000);
+                    getProductByIdFromCache(productId);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            }else{
+                product = JSON.parseObject(s, Product.class);
+            }
+
+        jedis.close();
+        return product;
     }
 }
